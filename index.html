@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>老农民 — PvP 对战扫雷</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body>
+
+<div id="app-shell">
+
+  <!-- ================================================
+       场景 1：启动画面
+       ================================================ -->
+  <div id="screen-start" class="screen">
+
+    <!-- 顶部装饰麦穗（轻量，不框住背景） -->
+    <div class="start-deco start-deco--top">🌾 🌾 🌾</div>
+
+    <!-- 标题区：独立浮于背景 -->
+    <div class="start-title-block">
+      <h1 class="start-title">老农民</h1>
+      <p class="start-subtitle">PvP 对战扫雷 · 八亩田争收成</p>
+    </div>
+
+    <!-- 空气间隔 -->
+    <div class="start-spacer"></div>
+
+    <!-- 木牌按钮组：每个独立悬浮 -->
+    <button class="sign-btn sign-btn--primary" id="btn-start">
+      <span class="sign-btn__icon">⚔️</span>
+      <span class="sign-btn__label">开始对战</span>
+    </button>
+
+    <button class="sign-btn sign-btn--secondary" id="btn-rules">
+      <span class="sign-btn__icon">📖</span>
+      <span class="sign-btn__label">游戏规则</span>
+    </button>
+
+    <!-- 底部提示 -->
+    <p class="start-hint">双人共用键盘 · 本地运行 · 无需联网</p>
+
+  </div>
+
+  <!-- ================================================
+       游戏规则弹窗（全局，任意阶段可触发）
+       ================================================ -->
+  <div id="rules-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <h2 class="modal-title">📖 游戏规则</h2>
+
+      <div class="rules-section">
+        <h3>🌱 布阵阶段</h3>
+        <p>双方各秘密选一格埋下积水坑（己方雷），互不可见。系统再随机撒下 8 颗天雷，合计 10 颗。双方各从 5 件道具中随机获得 1 件（私密）。</p>
+      </div>
+
+      <div class="rules-section">
+        <h3>🚜 劳作阶段</h3>
+        <p>轮流翻格，每回合翻 1 格。棋盘中央 4×4 区域为<strong>心田区✧</strong>，得分加倍：</p>
+        <ul>
+          <li>✅ 安全格 → 染色，<strong>-1步，+1分</strong>（心田区 <strong>+2分</strong>）</li>
+          <li>🌟 金苗格 → <strong>+2分，退还1步</strong>，净消耗为零（心田区 <strong>+3分</strong>）</li>
+          <li>☁️ 踩到天雷（系统雷）→ <strong>-2步</strong>，不染色</li>
+          <li>💀 踩到对方的坑 → <strong>-3步</strong>，对方高兴坏了</li>
+          <li>🤦 踩到自己的坑 → <strong>-1步</strong>，扭了下脚</li>
+        </ul>
+      </div>
+
+      <div class="rules-section">
+        <h3>⭐ 连排奖励</h3>
+        <p>翻格后，该行或列出现 <strong>4 格及以上连续己方区域</strong>，立即奖励 <strong>+2步</strong>（行、列各自独立，每条线每人只触发一次）。</p>
+      </div>
+
+      <div class="rules-section">
+        <h3>🌤️ 天气事件</h3>
+        <p>每累计翻格第 8、16、24 步触发一次随机天气（全屏动画，效果即时生效）：</p>
+        <ul>
+          <li>☀️ <strong>晴天暖阳</strong> — 当前回合玩家 +2步</li>
+          <li>🌧️ <strong>阴雨绵绵</strong> — 双方各 -1步</li>
+          <li>🌈 <strong>天降祥瑞</strong> — 随机新增 1 个金苗格</li>
+          <li>⛈️ <strong>雷暴骤临</strong> — 下一次任意踩雷罚步 -1（一次性）</li>
+        </ul>
+      </div>
+
+      <div class="rules-section">
+        <h3>🎒 道具系统</h3>
+        <ul>
+          <li>🔭 <strong>窥镜</strong> — 消耗1步，查看任意未翻格是否有雷</li>
+          <li>🛡️ <strong>斗笠</strong> — 被动，第一次踩雷时罚步减半（向下取整）</li>
+          <li>☔ <strong>引雷</strong> — 消耗1步，将己方雷秘密移至任意空格</li>
+          <li>🦗 <strong>蝗灾</strong> — 消耗2步，侵占对方已染色的 1 格（对方失分，金苗格除外）</li>
+          <li>🌊 <strong>决堤</strong> — 消耗1步，对方下次翻格额外 +1步代价</li>
+        </ul>
+        <p style="font-size:0.8rem;color:var(--text-dim)">道具使用不占翻格次数，在己方回合点击"使用"按钮。</p>
+      </div>
+
+      <div class="rules-section">
+        <h3>🏆 结算 &amp; 胜负</h3>
+        <p>步数归零或剩余格全为雷时收工，按顺序判定：</p>
+        <ol>
+          <li>基础得分 + <strong>连片加成</strong>：最大连通区域更大的玩家 +2分</li>
+          <li>同分 → 剩余步数多者胜</li>
+          <li>仍相同 → 平局</li>
+        </ol>
+      </div>
+
+      <button class="btn primary" id="btn-close-rules">明白了，开战！</button>
+    </div>
+  </div>
+
+  <!-- ================================================
+       场景 2：布阵阶段
+       ================================================ -->
+  <div id="screen-setup" class="screen hidden">
+    <h2 class="phase-title">⚡ 布阵 — 秘密埋雷 ⚡</h2>
+
+    <div id="setup-player-badge"></div>
+
+    <div class="board-container">
+      <div id="setup-board"></div>
+    </div>
+
+    <p id="setup-instructions" style="text-align:center;font-size:0.9rem;color:var(--text-dim);min-height:1.4em;"></p>
+
+    <button class="btn primary hidden" id="btn-confirm-mine">✅ 确认埋雷</button>
+
+    <!-- 交接遮挡层：全屏黑幕，防止对方偷看 -->
+    <div class="handoff-overlay hidden" id="handoff-overlay">
+      <div id="handoff-badge" class="player-badge"></div>
+      <p id="handoff-msg" class="handoff-msg"></p>
+      <button class="btn primary" id="btn-handoff-ready">我准备好了，开始选格</button>
+    </div>
+  </div>
+
+  <!-- ================================================
+       场景 3：劳作阶段
+       ================================================ -->
+  <div id="screen-game" class="screen hidden">
+
+    <!-- HUD -->
+    <div class="hud">
+      <div class="player-info p1" id="hud-p1">
+        <span class="player-label">🔵 玩家 A</span>
+        <span class="steps" id="steps-p1">16</span>
+        <span class="steps-unit" id="steps-unit-p1">步</span>
+        <div class="item-slot" id="item-slot-p1">
+          <span class="item-icon" id="item-icon-p1">—</span>
+          <button class="item-btn hidden" id="item-btn-p1">使用</button>
+        </div>
+      </div>
+
+      <div class="turn-indicator">
+        <span>当前回合</span>
+        <span class="turn-badge p1" id="turn-badge">玩家 A</span>
+        <span id="turn-hint" style="font-size:0.78rem;">点击任意未翻格子</span>
+        <button class="mute-btn" id="btn-mute" title="静音切换">🔊</button>
+      </div>
+
+      <div class="player-info p2" id="hud-p2">
+        <span class="player-label">🔴 玩家 B</span>
+        <span class="steps" id="steps-p2">17</span>
+        <span class="steps-unit" id="steps-unit-p2">步</span>
+        <div class="item-slot" id="item-slot-p2">
+          <span class="item-icon" id="item-icon-p2">—</span>
+          <button class="item-btn hidden" id="item-btn-p2">使用</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 棋盘 -->
+    <div class="board-container">
+      <div id="board"></div>
+    </div>
+
+    <p id="game-msg" style="font-size:0.9rem;color:var(--text-dim);min-height:1.2em;"></p>
+  </div>
+
+  <!-- ================================================
+       场景 4：结算画面
+       ================================================ -->
+  <div id="screen-result" class="screen hidden">
+    <h2 class="result-title">收 工 啦！</h2>
+
+    <div class="scores">
+      <div class="score-card p1" id="result-card-p1">
+        <span class="score-label">🔵 玩家 A 播种</span>
+        <span class="score-num" id="score-p1">—</span>
+        <span style="font-size:0.8rem;color:var(--text-dim)">格</span>
+      </div>
+      <div class="score-card p2" id="result-card-p2">
+        <span class="score-label">🔴 玩家 B 播种</span>
+        <span class="score-num" id="score-p2">—</span>
+        <span style="font-size:0.8rem;color:var(--text-dim)">格</span>
+      </div>
+    </div>
+
+    <p class="win-msg" id="win-msg">—</p>
+
+    <!-- 结算棋盘（完整揭示所有雷与金苗） -->
+    <div class="board-container">
+      <div id="board-result"></div>
+    </div>
+
+    <div class="btn-group" style="display:flex;gap:16px;">
+      <button class="btn primary" id="btn-rematch">再来一局</button>
+      <button class="btn" id="btn-exit">退出</button>
+    </div>
+  </div>
+
+</div><!-- /#app-shell -->
+
+  <script src="js/main.js"></script>
+  <script src="js/sfx.js"></script>
+  <script src="js/ui.js"></script>
+</body>
+</html>
